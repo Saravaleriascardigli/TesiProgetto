@@ -11,6 +11,9 @@
 	<link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
+	<!--
+		Questo svg traccia la griglia utilizzando i pattern
+	-->
 	<svg id="main" width="501" height="501">
 		<defs>
 			<pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
@@ -25,22 +28,31 @@
 		<rect width="100%" height="100%" fill="url(#grid)" />
 	</svg>
 
-	<svg id="palette" width="200" height="400">
+	<!--
+		Questo svg traccia i cerchi che utilizziamo come palette per la 
+		selezione della shape da tracciare o dell'azione da effettuare
+	-->
+
+	<svg id="palette" width="200" height="500">
 		<g transform="translate(100, 50)">
-			<circle r="30" />
-			<circle r="30" cy="75" />
-			<circle r="30" cy="150" />
-			<circle r="30" cy="225" />
-			<circle r="30" cy="300" />
+			<circle r="20" />
+			<circle r="20" cy="50" />
+			<circle r="20" cy="100" />
+			<circle r="20" cy="150" />
+			<circle r="20" cy="200" />
+			<circle r="20" cy="250" />
+			<circle r="20" cy="300" />
+			<circle r="20" cy="350" />
 		</g>
 	</svg>
 
-	<div id="shapeType" style="float:left; margin-left:25px;">Click on Palette to Start</div>
+	<!--
+		Questo div rappresenta una scritta a schermo temporanea 
+		per mostrare all'utente quale azione sta compiendo
+	-->
+	<div id="statusline" style="float:left; margin-left:25px;"></div>
 
 	<script src="shapes.js"></script>
-
-<!--
--->
 
 </body>
 </html>
