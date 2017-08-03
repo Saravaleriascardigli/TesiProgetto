@@ -1,13 +1,33 @@
 /*
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
 */
-/* 
-    Created on : 5-lug-2017, 18.00.33
-    Author     : sarav
-*/
-path1 {
+path.shape {
+	fill: none;
+	stroke: #200;
+	stroke-width: 5px;
+	stroke-linejoin: round;
+	stroke-linecap: round;
+}
+
+grid {
+	fill: none;
+	stroke: #ccc;
+	stroke-width: 1px;
+}
+
+#main {
+	float: left;
+}
+
+#palette {
+	float: left;
+	fill: #fed;
+	stroke: #ccc;
+}
+
+/*
+	float: right;
+
+path_old {
 	fill: none;
 	stroke: #200;
 	stroke-width: 2px;
@@ -23,10 +43,4 @@ path {
 	stroke-linecap: round;
 }
 
-#grid {
-	float: left;
-}
-
-#palette {
-	float: right;
-}
+*/

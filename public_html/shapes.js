@@ -1,6 +1,8 @@
 //	SHAPES
 
 var gestures = [], xa, ya, xb, yb, element = [],
+	shapeType = "point",
+	shapeTypes = ["point", "line", "arc"],
 	line = d3.line()		// create a new line generator
 		.curve(d3.curveBasis),	// a cubic basis spline, repeating the end points
 	arc = d3.arc()			// create a new arc generator
@@ -8,10 +10,6 @@ var gestures = [], xa, ya, xb, yb, element = [],
 		.innerRadius(100)
 		.startAngle(Math.PI/2)
 		.endAngle(Math.PI);
-
-element.shape = "point";
-element.shape = "arc";
-element.shape = "line";
 
 var svg = d3.select("svg")  // select an element and call a function on it
 	.call(d3.drag()         // create a drag behavior
@@ -28,7 +26,7 @@ function dragended() {
 	element.ya = ya;
 	if (element.shape == "point") {
 		var	d = d3.event.subject,
-			active = svg.append("path").datum(d);
+			active = svg.append("path").datum(d).attr("class", "shape");
 		active.attr("d", line);
 	} else {
 		element.xb = xb;
@@ -41,8 +39,9 @@ function dragended() {
 function dragstarted() {
 var	d = d3.event.subject,	// "d3.event" the current user event, during interaction
 	active = svg.append("path")	// create, append and select new elements
-		.datum(d);	// "datum" get or set element data (without joining)
+		.datum(d).attr("class", "shape");	// "datum" get or set element data (without joining)
 
+	element.shape = shapeType;
 	xa = d3.event.x;
 	ya = d3.event.y;
 	if (element.shape == "arc") {
@@ -76,3 +75,24 @@ var	d = d3.event.subject,	// "d3.event" the current user event, during interacti
 			}
 		});
 }
+
+d3.selectAll('circle').on('click', function(d, i) {
+	if (i < shapeTypes.length) {
+		mode = "draw"
+		shapeType = shapeTypes[i];
+		d3.select('#shapeType').text(shapeType);
+	} else {
+		switch (i) {
+		case shapeTypes.length:
+			active.attr("d", line);
+			break;
+		}
+	}
+});
+
+/*
+d3.select('#shapeType').text(shapeType);
+element.shape = "point";
+element.shape = "arc";
+element.shape = "line";
+*/
