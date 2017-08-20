@@ -1,5 +1,17 @@
 /*
 */
+
+@font-face { 
+	font-family: 'Glyphicons Halflings'; 
+	font-style: normal; 
+	font-weight: normal; 
+	src: url('glyphicons-halflings-regular.woff'); 
+}
+
+svg text {
+	font-family: 'Glyphicons Halflings';
+}
+
 path.shape {
 	fill: none;
 	stroke: #200;
@@ -24,7 +36,31 @@ grid {
 	stroke: #ccc;
 }
 
+
 /*
+
+@font-face { 
+	font-family: 'FontAwesome'; 
+	font-style: normal; 
+	font-weight: normal; 
+	src: url('fontawesome.woff'); 
+}
+
+svg text {
+   font-family: FontAwesome;
+}
+
+@font-face { 
+	font-family: 'Glyphicons Halflings'; 
+	font-style: normal; 
+	font-weight: normal; 
+	src: url('glyphicons-halflings-regular.woff'); 
+}
+
+svg text {
+	font-family: 'Glyphicons Halflings';
+}
+
 	float: right;
 
 path_old {
@@ -42,5 +78,8 @@ path {
 	stroke-linejoin: round;
 	stroke-linecap: round;
 }
+
+#palette::before,
+#ellarc::before { content: "XXX" }
 
 */

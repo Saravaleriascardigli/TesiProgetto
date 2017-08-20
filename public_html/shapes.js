@@ -279,6 +279,7 @@ case "draw":
 	active = svg.append("path").attr("class", "shape");
 	//	definisco nell'elemento stesso i vari attributi:
 	active.shape = shapeType;	//	il tipo di shape da tracciare
+	if (active.shape != "point") active.attr("marker-end", "url(#arrow)");
 	active.a = [];	//	il primo punto
 	active.b = [];	//	il secondo punto
 	active.a.x = active.b.x = d3.event.x;	//	inizialmente i due 
@@ -346,7 +347,8 @@ case "draw":
 	action - voce del menu correntemente attiva
 */
 
-var	palette = ["point", "line", "arc", "edit", "move", "prev", "next", "del", "arc90"],
+var	palette = ["point", "line", "arc", "arc90", "move", "edit", "del"],
+//	palette = ["point", "line", "arc", "arc90", "move", "edit", "del", "prev", "next"],
 	action = 0;
 
 //	attivo il gestore dell'evento click su tutti gli elementi "circle" di SVG
@@ -437,4 +439,8 @@ var	newAction = palette[i];	//	stringa corrispondente al cerchio cliccato
 });
 
 /*
+d3.selectAll('circle')
+    .append('text')
+    .attr('class', 'glyphicon')
+    .text('\ue059');
 */
