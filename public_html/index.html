@@ -16,9 +16,12 @@
 	-->
 	<svg id="main" width="501" height="501">
 		<defs>
-			<marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="1" 
+			<marker id="arrow" markerWidth="10" markerHeight="10" refX="2" refY="1" 
 				orient="auto" markerUnits="strokeWidth">
 				<path d="M0,0 L0,2 L3,1 z" fill="#f88" />
+			</marker>
+			<marker id="dot" markerWidth="10" markerHeight="10" refX="5" refY="5" >
+				<circle r="0.7" cx="5" cy="5" fill="#f44"/>
 			</marker>
 			<pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
 				<path d="M 10 0 L 0 0 0 10" fill="none" stroke="gray" stroke-width="0.5"/>
@@ -39,20 +42,22 @@
 
 	<svg id="palette" width="200" height="500">
 		<g transform="translate(100, 50)" stroke="#833">
-			<circle r="20" />
-                        <text x="0" y="17" text-anchor="middle" fill="#833" font-size="50px">&#x2022;</text>
-			<circle r="20" cy="50" />
-			<text x="0" y="61" text-anchor="middle" fill="#833" font-size="30px">&#x279a;</text>
-			<circle r="20" cy="100" />
-			<text x="0" y="112" text-anchor="middle" fill="#833" font-size="30px">&#x21b7;</text>
-			<circle r="20" cy="150" />
-			<text x="0" y="162" text-anchor="middle" fill="#833" font-size="30px">&#x21b7;</text>
-			<circle r="20" cy="200" />
-			<text x="0" y="208" text-anchor="middle" fill="#833">&#xe140;</text>
-			<circle r="20" cy="250" />
-			<text x="0" y="257" text-anchor="middle" fill="#833">&#xe065;</text>
-			<circle r="20" cy="300" />
-			<text x="0" y="308" text-anchor="middle" fill="#833">&#xe014;</text>
+			<circle class="button" r="26" />
+			<text x="0" y="12" text-anchor="middle" fill="#833" font-size="30px">&#8623;</text>
+			<circle class="button" r="26" cy="60" />
+			<text x="0" y="76" text-anchor="middle" fill="#833" font-size="48px">&#x2022;</text>
+			<circle class="button" r="26" cy="120" />
+			<text x="0" y="132" text-anchor="middle" fill="#833" font-size="30px">&#x279a;</text>
+			<circle class="button" r="26" cy="180" />
+			<text x="1" y="192" text-anchor="middle" fill="#833" font-size="30px">&#x21b7;</text>
+			<circle class="button" r="26" cy="240" />
+			<text x="0" y="252" text-anchor="middle" fill="#833" font-size="30px">&#x21b6;</text>
+			<circle class="button" r="26" cy="300" />
+			<text x="0" y="308" text-anchor="middle" fill="#833">&#xe140;</text>
+			<circle class="button" r="26" cy="360" />
+			<text x="0" y="368" text-anchor="middle" fill="#833">&#xe065;</text>
+			<circle class="button" r="26" cy="420" />
+			<text x="0" y="428" text-anchor="middle" fill="#833">&#xe014;</text>
 		</g>
 	</svg>
 
@@ -98,4 +103,8 @@ content:"\e215";
 			<text x="0" y="255" text-anchor="middle">&#xf048;</text>
 			<circle r="20" cy="300" />
 			<text x="0" y="305" text-anchor="middle">&#xf00d;</text>
+
+			<text x="0" y="192" text-anchor="middle" fill="#833" font-size="30px">&#10556;</text>
+			<text x="0" y="248" text-anchor="middle" fill="#833" font-size="30px">&#10557;</text>
+
 -->

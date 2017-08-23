@@ -28,6 +28,17 @@ return (dist2(item.a, x, y) < dist2(item.b, x, y)) ? 1 : 2 }
 function toLine(item) {
 return ["M", item.a.x, item.a.y, "L", item.b.x, item.b.y].join(" "); }
 
+//	restituisce la descrizione testuale dell'arco per il path dello SVG: 
+//	i punti a e b di item rappresentano gli estremi di un quarto d'arco 
+//	di ellisse, da tracciare in senso orario o anti-orario, 
+//	a seconda del valore di verso
+function toEllArc(item) {
+var	rx = item.b.x - item.a.x,
+	ry = item.b.y - item.a.y,
+	verso = (item.shape == "ellRev") ? 0 : 1;
+return ["M", item.a.x, item.a.y, "A", rx, ry, 0, 0, verso, item.b.x, item.b.y].join(" "); }
+
+
 //	restituisce la descrizione testuale dell'arco per il path dello SVG
 //	il punto a di item rappresenta il centro dell'arco da tracciare
 //	il punto b di item rappresenta un punto sul quarto d'arco di circonferenza
@@ -68,6 +79,10 @@ function redraw(item) {
 	case "line":
 		return item.attr("d", toLine(item));
 	//	break;	// superfluo
+	case "ellArc": 
+	case "ellRev":
+		return item.attr('d', toEllArc(item));
+	//	break;	// superfluo
 	case "arc":
 		return item.attr('d', toArc(item));
 	//	break;	// superfluo
@@ -93,6 +108,7 @@ var bgColor = '#fff', shapeColor = '#557', activeColor = '#aaf',
 	gestures = [],
 	active = "",
 	shapeType = "",
+	singleStroke = 0,
 	modes = ["draw", "edit", "move"],
 	mode = "",
 
@@ -225,22 +241,35 @@ return 0; }
 	modalità operative, che sono attualmente tre: "draw", "move" e "edit"
 */
 
-function dragstarted() { 
+function dragstarted() { var twinA, twinB, minA, minB, tmp;
 switch (mode) {
 case "move":
 	//	se non è presente alcuna shape, oppure se è cambiata la shape selezionata
 	//	allora l'eventuale spostamento del mouse viene ignorato
 	if ((gestures.length < 1) || checkSelection(d3.event.x, d3.event.y)) return;
 
-	d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
-	//	sposta entrambi i punti della shape della stessa entità
-	//	del movimento del mouse e quindi la ridisegna
-		active.a.x += d3.event.dx;
-		active.a.y += d3.event.dy;
-		active.b.x += d3.event.dx;
-		active.b.y += d3.event.dy;
-		redraw(active);
-	});
+	if (singleStroke) 
+		d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
+		//	in single stroke sposta tutte le shape della stessa entità
+		//	del movimento del mouse e quindi le ridisegna tutte
+			for (var i = 0; i < gestures.length; i++) {
+				gestures[i].a.x += d3.event.dx;
+				gestures[i].a.y += d3.event.dy;
+				gestures[i].b.x += d3.event.dx;
+				gestures[i].b.y += d3.event.dy;
+				redraw(gestures[i]);
+			}
+		});
+	else
+		d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
+		//	sposta entrambi i punti della shape della stessa entità
+		//	del movimento del mouse e quindi la ridisegna
+			active.a.x += d3.event.dx;
+			active.a.y += d3.event.dy;
+			active.b.x += d3.event.dx;
+			active.b.y += d3.event.dy;
+			redraw(active);
+		});
 	break;
 
 case "edit":
@@ -253,37 +282,89 @@ case "edit":
 		 || (active.shape == "point") )
 		return;
 
-	//	se la shape è di tipo "arc"
-	//	oppure se l'evento è più vicino al secondo punto della shape
-	//	allora viene spostato solo il secondo punto
-	//	NOTA nel caso del tipo "arc", il primo punto è il centro della 
-	//		circonferenza, mentre il secondo è un punto sull'arco stesso
-	if ((active.shape == "arc") || (nearest(active, d3.event.x, d3.event.y) == 2))
-		d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
-			active.b.x = d3.event.x;
-			active.b.y = d3.event.y;
-			redraw(active);
-		});
-	//	altrimenti, in tutti gli altri casi, viene spostato solo il primo punto
-	else
-		d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
-			active.a.x = d3.event.x;
-			active.a.y = d3.event.y;
-			redraw(active);
-		});
-	break;
+	if (! singleStroke) { // multi stroke
+		//	se la shape è di tipo "arc"
+		//	oppure se l'evento è più vicino al secondo punto della shape
+		//	allora viene spostato solo il secondo punto
+		//	NOTA nel caso del tipo "arc", il primo punto è il centro della 
+		//		circonferenza, mentre il secondo è un punto sull'arco stesso
+		if ((active.shape == "arc") || (nearest(active, d3.event.x, d3.event.y) == 2))
+			d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
+				active.b.x = d3.event.x;
+				active.b.y = d3.event.y;
+				redraw(active);
+			});
+		//	altrimenti, in tutti gli altri casi, viene spostato solo il primo punto
+		else
+			d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
+				active.a.x = d3.event.x;
+				active.a.y = d3.event.y;
+				redraw(active);
+			});
+	} else { // single stroke
+		minA = 10000000000000000000;
+		minB = 10000000000000000000;
+		twinA = 0;
+		twinB = 0;
+		for (var i = 0; i < gestures.length; i++) {
+			tmp = dist2(gestures[i].a, d3.event.x, d3.event.y);
+			if (tmp < minA) { 
+				minA = tmp; 
+				twinA = gestures[i];
+			}
+			tmp = dist2(gestures[i].b, d3.event.x, d3.event.y);
+			if (tmp < minB) { 
+				minB = tmp; 
+				twinB = gestures[i];
+			}
+		}
 
+		if (Math.abs(minA - minB) > 10) 
+			if (minA < minB) twinB = 0;
+			else twinA = 0;
+
+		d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
+			if (twinA != 0) {
+				twinA.a.x = d3.event.x;
+				twinA.a.y = d3.event.y;
+				redraw(twinA);
+			}
+			if (twinB != 0) {
+				twinB.b.x = d3.event.x;
+				twinB.b.y = d3.event.y;
+				redraw(twinB);
+			}
+		});
+	}
+	break;
+	
 case "draw":
 	//	creo un elemento path con classe "shape", inserendolo all'interno 
 	//	dello SVG, e ne salvo il riferimento restituito in active
 	active = svg.append("path").attr("class", "shape");
 	//	definisco nell'elemento stesso i vari attributi:
 	active.shape = shapeType;	//	il tipo di shape da tracciare
-	if (active.shape != "point") active.attr("marker-end", "url(#arrow)");
+	if (active.shape != "point") {
+		active.attr("marker-end", "url(#arrow)");
+		if (! singleStroke || (gestures.length == 0))
+			active.attr("marker-start", "url(#dot)");
+	}
 	active.a = [];	//	il primo punto
 	active.b = [];	//	il secondo punto
-	active.a.x = active.b.x = d3.event.x;	//	inizialmente i due 
-	active.a.y = active.b.y = d3.event.y;	//	punti sono uguali
+	if (singleStroke && (active.shape != "point") 
+		&& (gestures.length > 0) && (gestures[0].shape != "point")) {
+		// se in modalità single stroke e se non è un punto, 
+		// il primo punto parte dal secondo dello stroke precedente, 
+		// se questo esiste e se non è un punto a sua volta
+		active.a.x = gestures[0].b.x;
+		active.b.x = d3.event.x;
+		active.a.y = gestures[0].b.y;
+		active.b.y = d3.event.y;
+	} else {
+		// in tutti gli altri casi, inizialmente i due punti sono uguali
+		active.a.x = active.b.x = d3.event.x;
+		active.a.y = active.b.y = d3.event.y;
+	}
 	//	quindi gli imposto il colore attivo...
 	redraw(active).style("stroke", activeColor);
 	//	... e nel contempo imposto con colore non attivo 
@@ -347,18 +428,25 @@ case "draw":
 	action - voce del menu correntemente attiva
 */
 
-var	palette = ["point", "line", "arc", "arc90", "move", "edit", "del"],
+var	palette = ["single", "point", "line", "ellArc", "ellRev", "move", "edit", "del"],
 //	palette = ["point", "line", "arc", "arc90", "move", "edit", "del", "prev", "next"],
 	action = 0;
 
 //	attivo il gestore dell'evento click su tutti gli elementi "circle" di SVG
-d3.selectAll('circle').on('click', function(d, i) {
+d3.selectAll('.button').on('click', function(d, i) {
+//d3.selectAll('circle').on('click', function(d, i) {
 
 //	i = indice del cerchio cliccato
 //		se impostato a -1, non si deve cambiare l'action corrente
 var	newAction = palette[i];	//	stringa corrispondente al cerchio cliccato
 
 	switch (newAction) {
+	case "single": 
+		singleStroke = ! singleStroke;
+		d3.select(this).style("fill", singleStroke ? "#def": "#fed");
+		break;
+	case "ellArc": 
+	case "ellRev":
 	case "point":
 	case "line":
 	case "arc":
@@ -418,7 +506,7 @@ var	newAction = palette[i];	//	stringa corrispondente al cerchio cliccato
 		break;
 	}
 
-	if (i >= 0) {	//	se l'action corrente deve essere cambiata
+	if (i > 0) {	//	se l'action corrente deve essere cambiata
 		if (action != 0)	// se ne esiste una precedente
 			action.style("fill", "#fed");	// le riassegno il colore di fondo
 		action = d3.select(this);	// salvo il riferimento al cerchio corrente
@@ -443,4 +531,40 @@ d3.selectAll('circle')
     .append('text')
     .attr('class', 'glyphicon')
     .text('\ue059');
+
+function toEllArc(item) {
+var	
+	rx = item.b.x - item.a.x,
+	ry = item.b.y - item.a.y,
+	cx = (item.b.x >= item.a.x) ^^ item.verso ? item.a.x : item.b.x,
+	cy = (item.b.y >= item.a.y) ^^ item.verso ? item.a.y : item.b.y;
+	if (dx*dx >= dy*dy) {
+		
+	} else {
+	}
+}
+
+return ["M", item.a.x, item.a.y, "A", Math.abs(rx), Math.abs(ry), 0, 0, 
+
+		tmp = dist2(gestures[i].a, d3.event.x, d3.event.y);
+		if (tmp < min) { 
+			k = i;
+			min = tmp; 
+			twinA = gestures[i];
+			if ((i > 0) && (gestures[i-1].shape != "point"))
+				twinB = gestures[i-1];
+			else
+				twinB = 0;
+		}
+		tmp = dist2(gestures[i].b, d3.event.x, d3.event.y);
+		if (tmp < min) { 
+			k = i; 
+			min = tmp; 
+			twinB = gestures[i];
+			if ((i+1 < gestures.length) && (gestures[i+1].shape != "point"))
+				twinA = gestures[i+1];
+			else
+				twinA = 0;
+		}
+
 */
