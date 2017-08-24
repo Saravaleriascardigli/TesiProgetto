@@ -1,6 +1,8 @@
 /*
 */
 
+* { box-sizing: border-box; }
+
 @font-face { 
 	font-family: 'Glyphicons Halflings'; 
 	font-style: normal; 
@@ -27,13 +29,27 @@ grid {
 }
 
 #main {
-	float: left;
+	afloat: left;
 }
 
 #palette {
-	float: left;
+	afloat: left;
 	fill: #fed;
 	stroke: #ccc;
+}
+#statusline {
+	afloat:left; 
+	margin-left:25px;
+}
+
+#printer {
+	margin: 20px 0 0;
+	padding: 10px 20px;
+	width: 501px;
+	height: 71px;
+	background-color: #eee;
+	border: 1px solid #ccc;
+	border-radius: 8px;
 }
 
 

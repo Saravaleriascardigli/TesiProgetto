@@ -52,6 +52,11 @@ function toArc(item) {
 return ["M", item.a.x, item.a.y, 
 	"A", item.radius, item.radius, 0, 0, item.verso, item.b.x, item.b.y].join(" "); }
 
+function printExpr() {
+	gestures.sort
+	d3.select('#printer').text("Una frase a caso");
+}
+
 //	(ri)traccia le varie shape chiamando le opportune funzioni 
 //	per generare le corrispondenti descrizioni testuali SVG
 function redraw(item) {
@@ -76,38 +81,6 @@ function redraw(item) {
 	}
 }
 
-
-/*
-	### Variabili Globali ###
-
-	gestures - vettore che contiene gli SVG generati nel DOM
-	element - vettore che contiene i punti della shape usato solo per il log
-	shapeType - tipo della shape (linea, punto, arco)
-	singleStroke - 0/1, forza l'operatività in singlestroke
-	bgColor, shapeColor, activeColor - colori di background, shape e selezione attiva
-	modes - vettore che elenca le varie modalità operative
-	mode - modalità corrente
-*/
-
-var bgColor = '#fff', shapeColor = '#557', activeColor = '#aaf',
-	gestures = [],
-	active = "",
-	shapeType = "",
-	singleStroke = 0,
-	modes = ["draw", "edit", "move"],
-	mode = "",
-
-//	imposto adesso il gestore degli eventi di trascinamento del mouse 
-//	(localizzato sullo SVG con ID univoco #main, che contiene la griglia 
-//	di fondo), generata direttamente nella dichiarazione dello stesso 
-//	SVG nell'html - salvo inoltre il riferimento restituito, in quanto 
-//	mi servirà per inserirvi le shape generate 
-	svg = d3.select("#main")
-		.call(d3.drag()	//	avvia i due gestori degli eventi di trascinamento
-			.on("start", dragstarted)
-			.on("end", dragended)
-		);
-
 //	*** PROVVISORIO *** Gestione della RIGA DI STATO
 //	( testo descrittivo dello stato corrente del sistema )
 function updateStatus() {
@@ -122,9 +95,39 @@ const defaultStatus = "Click on Palette to Start";
 		d3.select('#statusline').text(mode + " " + active.shape);
 }
 
-//	imposta il valore iniziale della riga di stato 
-updateStatus();
+/*
+	### Variabili Globali ###
 
+	gestures - vettore che contiene gli SVG generati nel DOM
+	element - vettore che contiene i punti della shape usato solo per il log
+	shapeType - tipo della shape (linea, punto, arco)
+	active - riferimento alla shape correntemente selezionata
+	counter - contatore progressivo delle shape generate
+	uniStroke - 0/1, forza l'operatività in unistroke
+	bgColor, shapeColor, activeColor - colori di background, shape e selezione attiva
+	modes - vettore che elenca le varie modalità operative
+	mode - modalità corrente
+*/
+
+var bgColor = '#fff', shapeColor = '#557', activeColor = '#aaf',
+	gestures = [],
+	counter = 0,
+	active = "",
+	shapeType = "",
+	uniStroke = 0,
+	modes = ["draw", "edit", "move"],
+	mode = "",
+
+//	imposto adesso il gestore degli eventi di trascinamento del mouse 
+//	(localizzato sullo SVG con ID univoco #main, che contiene la griglia 
+//	di fondo), generata direttamente nella dichiarazione dello stesso 
+//	SVG nell'html - salvo inoltre il riferimento restituito, in quanto 
+//	mi servirà per inserirvi le shape generate 
+	svg = d3.select("#main")
+		.call(d3.drag()	//	avvia i due gestori degli eventi di trascinamento
+			.on("start", dragstarted)
+			.on("end", dragended)
+		);
 
 /*
 	La funzione "dragended" viene chiamata alla fine del tracciamento
@@ -163,6 +166,9 @@ var	element = [];	// contiene le informazioni sulla shape per il log
 		element.yb = active.b.y;
 	}
 
+//	assegno l'indice progressivo alla nuova shape incrementando il contatore
+	active.index = ++counter;
+	element.id = active.index;
 //	salvo la nuova shape nell'apposito vettore
 	gestures.unshift(active);
 //	ed effettuo il log nella console
@@ -219,8 +225,9 @@ function checkSelection(x,y) { if (gestures.length > 1) {
 			break;
 	}
 
-	//	se è stato selezionato un elemento ed è differente da quello già attivo:
-	if ((selected > -1) && (active !== gestures[selected])) {
+	//	se è stato selezionato un elemento 
+	//	ed è differente da quello già attivo (che ha sempre indice 0):
+	if (selected > 0) {
 	//	allora rimetto il colore normale al precendente attivo
 		active.style("stroke", shapeColor);
 	//	rendo attivo il nuovo selezionato
@@ -252,9 +259,9 @@ case "move":
 	//	allora l'eventuale spostamento del mouse viene ignorato
 	if ((gestures.length < 1) || checkSelection(d3.event.x, d3.event.y)) return;
 
-	if (singleStroke) 
+	if (uniStroke) 
 		d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
-		//	in singlestroke sposta tutte le shape della stessa entità
+		//	in unistroke sposta tutte le shape della stessa entità
 		//	del movimento del mouse e quindi le ridisegna tutte
 			for (var i = 0; i < gestures.length; i++) {
 				gestures[i].a.x += d3.event.dx;
@@ -279,31 +286,39 @@ case "move":
 case "edit":
 	//	se non è presente alcuna shape
 	//	oppure se è cambiata la shape selezionata
-	//	oppure se la shape è un punto
 	//	allora l'eventuale spostamento del mouse viene ignorato
-	if ( (gestures.length < 1)
-		 || checkSelection(d3.event.x, d3.event.y)
-		 || (active.shape == "point") )
+	if ( (gestures.length < 1) || checkSelection(d3.event.x, d3.event.y) )
 		return;
 
-	if (! singleStroke) { // multistroke
+	if (! uniStroke) { // multistroke
 		//	se sono in multistroke, devo spostare soltanto un estremo della 
 		// 	shape attiva, quello più vivino al click, che salvo in point
 		point = nearest(active, d3.event.x, d3.event.y);
 		d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
 			//	aggiorno le coordinate del punto da trascinare
-			point.x = d3.event.x;
-			point.y = d3.event.y;
+			if (active.shape == "point") {
+				active.a.x = active.b.x = d3.event.x;
+				active.a.y = active.b.y = d3.event.y;
+			} else {
+				point.x = d3.event.x;
+				point.y = d3.event.y;
+			}
 			//	quindi ridisegno la shape
 			redraw(active);
 		});
-	} else { // singlestroke
-		//	altrimenti, se sono in singlestroke, devo individuare e salvare 
+	} else { // unistroke
+		//	altrimenti, se sono in unistroke, devo individuare e salvare 
 		//	i due estremi "gemelli" delle shape consecutive da spostare insieme
+
+		//	testo ciclicamente tutte le shape per trovare gli estremi iniziale (a) e 
+		//	finale (b) più vicini al click e ne salvo i riferimenti in twinA e twinB
+		//	nonché le rispettive distanze in minA e minB; 
+		//	le quattro variabili sono inizializzate con la shape attiva, riferita 
+		//	in gestures[0], e il ciclo parte quindi dalla shape successiva
 		minA = dist2(gestures[0].a, d3.event.x, d3.event.y);
 		minB = dist2(gestures[0].b, d3.event.x, d3.event.y);
 		twinA = twinB = gestures[0];
-		for (var i = 0; i < gestures.length; i++) {
+		for (var i = 1; i < gestures.length; i++) {
 			tmp = dist2(gestures[i].a, d3.event.x, d3.event.y);
 			if (tmp < minA) { 
 				minA = tmp; 
@@ -316,19 +331,39 @@ case "edit":
 			}
 		}
 
+		//	se i due estremi sopra calcolati non coincidono esattamente 
+		//	(secondo la tolleranza stabilita), allora sposto solo il più vicino
 		if (Math.abs(minA - minB) > 10) 
 			if (minA < minB) twinB = 0;
 			else twinA = 0;
+		//	IMPORTANTE!
+		//	il punto non può far parte di un unistroke, quindi 
+		//	devo limitarmi a spostare il solo punto anche nel caso 
+		//	che casualmente coincida con l'estremo di un altra shape
+		else if (twinA.shape == "point") twinB = 0;
+		else if (twinB.shape == "point") twinA = 0;
 
 		d3.event.on("drag", function() {	// gestore dell'evento di trascinamento
-			if (twinA != 0) {
+			if (twinA != 0) {	// se twinA è un riferimento non nullo, 
+				//	sposto il primo estremo (a)
 				twinA.a.x = d3.event.x;
 				twinA.a.y = d3.event.y;
+				//	ma se è un punto devo spostare entrambi gli estremi
+				if (twinA.shape == "point") {
+					twinA.b.x = d3.event.x;
+					twinA.b.y = d3.event.y;
+				}
 				redraw(twinA);
 			}
-			if (twinB != 0) {
+			if (twinB != 0) {	// se twinB è un riferimento non nullo,
+				//	sposto il secondo estremo (b)
 				twinB.b.x = d3.event.x;
 				twinB.b.y = d3.event.y;
+				//	ma se è un punto devo spostare entrambi gli estremi
+				if (twinB.shape == "point") {
+					twinB.a.x = d3.event.x;
+					twinB.a.y = d3.event.y;
+				}
 				redraw(twinB);
 			}
 		});
@@ -343,14 +378,14 @@ case "draw":
 	active.shape = shapeType;	//	il tipo di shape da tracciare
 	if (active.shape != "point") {
 		active.attr("marker-end", "url(#arrow)");
-		if (! singleStroke || (gestures.length == 0) || (gestures[0].shape == "point"))
+		if (! uniStroke || (gestures.length == 0) || (gestures[0].shape == "point"))
 			active.attr("marker-start", "url(#dot)");
 	}
 	active.a = [];	//	il primo punto
 	active.b = [];	//	il secondo punto
-	if (singleStroke && (active.shape != "point") 
+	if (uniStroke && (active.shape != "point") 
 		&& (gestures.length > 0) && (gestures[0].shape != "point")) {
-		// se in modalità singlestroke e se non è un punto, 
+		// se in modalità unistroke e se non è un punto, 
 		// il primo punto parte dal secondo dello stroke precedente, 
 		// se questo esiste e se non è un punto a sua volta
 		active.a.x = gestures[0].b.x;
@@ -401,7 +436,7 @@ case "draw":
 	dal gestore dell'evento per stabilire come interpretare il movimento del mouse 
 	e conseguentemente tradurlo nell'azione voluta.
 	
-	Il primo bottone attiva e disattiva l'operatività singlestroke.
+	Il primo bottone attiva e disattiva l'operatività unistroke.
 
 	I successivi quattro bottoni attivano la modalità "draw" e selezionano il 
 	tracciamento della shape corrispondente: 
@@ -431,9 +466,9 @@ var	newAction = palette[i];	//	stringa corrispondente al cerchio cliccato
 
 	switch (newAction) {
 	case "single": 
-		singleStroke = ! singleStroke;  // inverto lo stato (on/off)
+		uniStroke = ! uniStroke;  // inverto lo stato (on/off)
 		// imposto il colore in funzione dello stato attivo 
-		d3.select(this).style("fill", singleStroke ? "#def": "#fed");
+		d3.select(this).style("fill", uniStroke ? "#def": "#fed");
 		break;
 	case "point":
 	case "line":
@@ -470,28 +505,6 @@ var	newAction = palette[i];	//	stringa corrispondente al cerchio cliccato
 			}
 		}
 		break;
-	case "prev":
-		i = -1;	//	l'action corrente rimane inalterata
-		//	rendo attiva la shape precedente
-		if (gestures.length > 1) {	// se ci sono meno di due shape, ignoro il tutto
-			active = gestures.shift();	// estraggo la shape correntemente attiva
-			gestures.push(active);	// e la reinserisco all'altro estremo dello stack
-			active.style("stroke", shapeColor);	// le assegno il colore normale
-			active = gestures[0];	// rendo attiva quella rimasta in testa
-			active.style("stroke", activeColor);	// e le assegno il colore attivo
-		}
-		break;
-	case "next":
-		i = -1;	//	l'action corrente rimane inalterata
-		//	rendo attiva la shape successiva
-		if (gestures.length > 1) {	// se ci sono meno di due shape, ignoro il tutto
-			active = gestures[0];	// riprendo la shape correntmente attiva
-			active.style("stroke", shapeColor);	// e le assegno il colore normale
-			active = gestures.pop();	// estraggo quella che era ultima
-			gestures.unshift(active);	// e la reinserisco in testa
-			active.style("stroke", activeColor);	// assegnandole il colore attivo
-		}
-		break;
 	}
 
 	if (i > 0) {	//	se l'action corrente deve essere cambiata
@@ -504,15 +517,8 @@ var	newAction = palette[i];	//	stringa corrispondente al cerchio cliccato
 	updateStatus();
 });
 
-/*
-		//	precalcolo il raggio e le coordinate del centro per altri usi (selezione)
-		if ((active.shape == "arc") || (active.shape == "rev")) {
-			active.center = arcCenter(active);
-			active.radius = Math.sqrt(delta2(active)/2.0);
-		//	essendo l'arco un quarto di circonferenza, il raggio è pari alla
-		//	lunghezza della corda diviso radice di due, quindi per semplicità 
-		//	divido direttamente per due delta2(active), che è il quadrato della 
-		//	lunghezza della corda, PRIMA di estrarne la radice quadrata
+//	imposta il valore iniziale della riga di stato 
+updateStatus();
 
-//	d3.select('#statusline').text(defaultStatus);
+/*
 */
